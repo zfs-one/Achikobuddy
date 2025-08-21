@@ -7,7 +7,10 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="tmp\" />
+    <Compile Remove="tmp\**" />
+    <EmbeddedResource Remove="tmp\**" />
+    <None Remove="tmp\**" />
+    <Page Remove="tmp\**" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AchikobuddyDll\AchikobuddyDll.csproj" />

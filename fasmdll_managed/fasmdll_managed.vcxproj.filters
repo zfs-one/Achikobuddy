@@ -33,7 +33,4 @@
   <ItemGroup>
     <Object Include="FASM.OBJ" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="fasmdll_managed_key.snk" />
-  </ItemGroup>
 </Project>
