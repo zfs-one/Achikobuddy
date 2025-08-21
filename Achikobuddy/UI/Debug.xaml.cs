@@ -34,7 +34,7 @@ namespace Achikobuddy.UI
         {
             var logs = Bugger.GetLogMessages();
             logTextBox.Text = string.Join("\n", logs);
-            logTextBox.ScrollToEnd();
+            // Removed ScrollToEnd to disable autoscrolling
         }
 
         private void ClearLogsButton_Click(object sender, RoutedEventArgs e)

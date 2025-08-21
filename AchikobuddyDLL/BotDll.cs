@@ -1,8 +1,9 @@
-﻿using System;
-using System.IO;
-using System.Diagnostics;
-using DllExporterNet4; // attribute lives here (from the NuGet package)
+﻿using DllExporterNet4;
 using GreyMagic;
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices;
 
 namespace AchikobuddyDll
 {
@@ -11,32 +12,33 @@ namespace AchikobuddyDll
         private static InProcessMemoryReader _reader;
         private static Framelock _framelock;
 
-        // NOTE: DllExporterNet4 expects the attribute with no ctor args
-        [DllExport]
+        [DllExport("EntryPoint", CallingConvention = CallingConvention.Cdecl)]
         public static void EntryPoint()
         {
             try
             {
+                File.AppendAllText("achikobuddy.log", $"{DateTime.Now:HH:mm:ss}: EntryPoint invoked [Critical]\n");
+
                 var proc = Process.GetCurrentProcess();
-
-                // basic logging to help debug injection
                 File.AppendAllText("achikobuddy.log",
-                    $"{DateTime.Now:HH:mm:ss}: EntryPoint called in process {proc.ProcessName} ({proc.Id})\n");
+                    $"{DateTime.Now:HH:mm:ss}: EntryPoint called in process {proc.ProcessName} ({proc.Id}) [Critical]\n");
 
-                // initialize GreyMagic in-proc reader
                 _reader = new InProcessMemoryReader(proc);
-
-                // initialize framelock (if your GreyMagic build has it)
-                _framelock = Framelock.Instance;
-                _framelock.Initialize();
-
                 File.AppendAllText("achikobuddy.log",
-                    $"{DateTime.Now:HH:mm:ss}: DLL injected, InProcessMemoryReader and Framelock initialized\n");
+                    $"{DateTime.Now:HH:mm:ss}: InProcessMemoryReader initialized [Critical]\n");
+
+                _framelock = Framelock.Instance;
+                File.AppendAllText("achikobuddy.log",
+                    $"{DateTime.Now:HH:mm:ss}: Framelock instance created [Critical]\n");
+
+                _framelock.Initialize();
+                File.AppendAllText("achikobuddy.log",
+                    $"{DateTime.Now:HH:mm:ss}: DLL injected, InProcessMemoryReader and Framelock initialized [Critical]\n");
             }
             catch (Exception ex)
             {
                 File.AppendAllText("achikobuddy.log",
-                    $"{DateTime.Now:HH:mm:ss}: DLL init failed: {ex}\n");
+                    $"{DateTime.Now:HH:mm:ss}: DLL init failed: {ex.Message} [Critical]\n");
             }
         }
     }
