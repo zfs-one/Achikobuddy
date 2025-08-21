@@ -1,9 +1,8 @@
-﻿using DllExporterNet4;
-using GreyMagic;
-using System;
-using System.Diagnostics;
+﻿using System;
 using System.IO;
-using System.Runtime.InteropServices;
+using System.Diagnostics;
+using DllExporterNet4;
+using GreyMagic;
 
 namespace AchikobuddyDll
 {
@@ -12,13 +11,13 @@ namespace AchikobuddyDll
         private static InProcessMemoryReader _reader;
         private static Framelock _framelock;
 
-        [DllExport("EntryPoint", CallingConvention = CallingConvention.Cdecl)]
+        [DllExport]
         public static void EntryPoint()
         {
+            File.AppendAllText("achikobuddy.log", $"{DateTime.Now:HH:mm:ss}: EntryPoint invoked [Critical]\n");
+
             try
             {
-                File.AppendAllText("achikobuddy.log", $"{DateTime.Now:HH:mm:ss}: EntryPoint invoked [Critical]\n");
-
                 var proc = Process.GetCurrentProcess();
                 File.AppendAllText("achikobuddy.log",
                     $"{DateTime.Now:HH:mm:ss}: EntryPoint called in process {proc.ProcessName} ({proc.Id}) [Critical]\n");
