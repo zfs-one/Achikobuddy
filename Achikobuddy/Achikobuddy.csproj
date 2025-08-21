@@ -9,4 +9,9 @@
   <ItemGroup>
     <Folder Include="tmp\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AchikobuddyDll\AchikobuddyDll.csproj" />
+    <ProjectReference Include="..\fasmdll_managed\fasmdll_managed.vcxproj" />
+    <ProjectReference Include="..\GreyMagic\GreyMagic.csproj" />
+  </ItemGroup>
 </Project>

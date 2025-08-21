@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using Achikobuddy.Memory;
@@ -36,29 +37,57 @@ namespace Achikobuddy.Core
 
         public static bool InjectDll(int pid, string dllPath)
         {
+            Bugger.Log($"Attempting to inject DLL: {dllPath} into PID {pid} [Critical]");
+            if (!File.Exists(dllPath))
+            {
+                Bugger.Log($"DLL not found at {dllPath} [Critical]");
+                return false;
+            }
+
             try
             {
                 Process process = Process.GetProcessById(pid);
                 IntPtr hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, pid);
                 if (hProcess == IntPtr.Zero)
-                    throw new Exception("Failed to open process");
+                {
+                    Bugger.Log($"Failed to open process PID {pid}: Error {Marshal.GetLastWin32Error()} [Critical]");
+                    return false;
+                }
 
                 byte[] dllPathBytes = Encoding.ASCII.GetBytes(dllPath + "\0");
                 IntPtr allocAddr = VirtualAllocEx(hProcess, IntPtr.Zero, (uint)dllPathBytes.Length, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
                 if (allocAddr == IntPtr.Zero)
-                    throw new Exception("Failed to allocate memory");
+                {
+                    Bugger.Log($"Failed to allocate memory in PID {pid}: Error {Marshal.GetLastWin32Error()} [Critical]");
+                    CloseHandle(hProcess);
+                    return false;
+                }
 
-                if (!WriteProcessMemory(hProcess, allocAddr, dllPathBytes, (uint)dllPathBytes.Length, out _))
-                    throw new Exception("Failed to write DLL path");
+                IntPtr bytesWritten;
+                if (!WriteProcessMemory(hProcess, allocAddr, dllPathBytes, (uint)dllPathBytes.Length, out bytesWritten))
+                {
+                    Bugger.Log($"Failed to write DLL path to PID {pid}: Error {Marshal.GetLastWin32Error()} [Critical]");
+                    CloseHandle(hProcess);
+                    return false;
+                }
 
                 IntPtr loadLibraryAddr = GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryA");
                 if (loadLibraryAddr == IntPtr.Zero)
-                    throw new Exception("Failed to get LoadLibraryA address");
+                {
+                    Bugger.Log($"Failed to get LoadLibraryA address: Error {Marshal.GetLastWin32Error()} [Critical]");
+                    CloseHandle(hProcess);
+                    return false;
+                }
 
                 IntPtr threadHandle = CreateRemoteThread(hProcess, IntPtr.Zero, 0, loadLibraryAddr, allocAddr, 0, out _);
                 if (threadHandle == IntPtr.Zero)
-                    throw new Exception("Failed to create remote thread");
+                {
+                    Bugger.Log($"Failed to create remote thread in PID {pid}: Error {Marshal.GetLastWin32Error()} [Critical]");
+                    CloseHandle(hProcess);
+                    return false;
+                }
 
+                CloseHandle(threadHandle);
                 CloseHandle(hProcess);
                 Bugger.Log($"DLL injected into PID {pid} [Critical]");
                 return true;
