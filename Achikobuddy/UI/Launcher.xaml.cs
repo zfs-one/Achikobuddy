@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -30,8 +30,10 @@ namespace Achikobuddy.UI
             _updateTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
             _updateTimer.Tick += (s, args) => UpdatePidList();
             _updateTimer.Start();
+
             Bugger.Log("Launcher loaded, timer started [Critical]");
         }
+
 
         private void Launcher_Unloaded(object sender, RoutedEventArgs e)
         {
@@ -46,7 +48,11 @@ namespace Achikobuddy.UI
                 _debugWindow.Close();
                 _debugWindow = null;
             }
+
+            // ❌ REMOVE THIS:
+            // Bugger.StopPipeServer();
         }
+
 
         private void UpdatePidList()
         {
@@ -129,9 +135,9 @@ namespace Achikobuddy.UI
             }
         }
 
+        // ✅ Checkbox now only toggles Debug window (logging always stays on)
         private void EnableDebugCheckBox_Checked(object sender, RoutedEventArgs e)
         {
-            Bugger.EnableLogging(true);
             if (_debugWindow == null)
             {
                 _debugWindow = new Debug();
@@ -148,7 +154,6 @@ namespace Achikobuddy.UI
 
         private void EnableDebugCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
-            Bugger.EnableLogging(false);
             if (_debugWindow != null)
             {
                 _debugWindow.Close();

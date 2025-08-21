@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Diagnostics;
 using System.Threading;
+using System.Windows.Forms; // ✅ WinForms for MessageBox
 using DllExporterNet4;
 using GreyMagic;
 
@@ -16,12 +17,20 @@ namespace AchikobuddyDll
         [DllExport]
         public static void EntryPoint()
         {
-            Log("EntryPoint invoked [Critical]");
             try
             {
-                Log("Attempting to initialize process [Critical]");
+                Log("EntryPoint invoked [Critical]");
+
                 var proc = Process.GetCurrentProcess();
                 Log($"EntryPoint called in process {proc.ProcessName} ({proc.Id}) [Critical]");
+
+                // ✅ Sanity check messagebox
+                MessageBox.Show(
+                    $"Achikobuddy DLL injected into {proc.ProcessName} (PID: {proc.Id})",
+                    "Achikobuddy DLL",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
 
                 Log("Initializing InProcessMemoryReader [Critical]");
                 _reader = new InProcessMemoryReader(proc);
@@ -45,6 +54,7 @@ namespace AchikobuddyDll
         {
             string timestampedMessage = $"{DateTime.Now:HH:mm:ss}: {message}";
             bool loggedToPipe = false;
+
             for (int i = 0; i < 3; i++) // Retry 3 times
             {
                 try
@@ -61,40 +71,17 @@ namespace AchikobuddyDll
                         break;
                     }
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Thread.Sleep(100); // Wait before retry
-                    if (i == 2) // Log to file on final failure
-                    {
-                        try
-                        {
-                            File.AppendAllText(@"C:\dll_log.txt", $"{timestampedMessage}, Pipe error: {ex.Message}\n");
-                        }
-                        catch (Exception fileEx)
-                        {
-                            // Fallback to temp directory if C:\ fails
-                            try
-                            {
-                                string tempPath = Path.Combine(Path.GetTempPath(), "dll_log.txt");
-                                File.AppendAllText(tempPath,
-                                    $"{timestampedMessage}, Pipe error: {ex.Message}, C:\\ error: {fileEx.Message}\n");
-                            }
-                            catch (Exception tempEx)
-                            {
-                                // Last resort: try current directory
-                                try
-                                {
-                                    File.AppendAllText("dll_log.txt",
-                                        $"{timestampedMessage}, Pipe error: {ex.Message}, C:\\ error: {fileEx.Message}, Temp error: {tempEx.Message}\n");
-                                }
-                                catch { /* Silent fail */ }
-                            }
-                        }
-                    }
+                    Thread.Sleep(100);
                 }
             }
-            if (loggedToPipe)
-                Thread.Sleep(100); // Throttle to prevent pipe overload
+
+            if (!loggedToPipe)
+            {
+                try { File.AppendAllText(@"C:\dll_log.txt", timestampedMessage + Environment.NewLine); }
+                catch { /* ignore if logging fails completely */ }
+            }
         }
     }
 }
